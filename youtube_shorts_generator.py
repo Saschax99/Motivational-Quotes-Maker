@@ -12,38 +12,40 @@ import random
 import uuid
 from config import USER, PASSWORD
 
-songs_path = "songs"
-temp_path = "temp"
-results_path = "results"
+SONGS_PATH = "songs"
+TEMP_PATH = "temp"
+RESULTS_PATH = "results"
+TIMEOUT = 30
 
 class OsTools:
     @staticmethod
-    def get_folder_count(path, extensions: str = None) -> int:
+    def get_folder_count(path: str, extensions: str = None) -> int:
+        """Get the number of files in a folder with optional extensions."""
         list_dir = os.listdir(path)
-        count = 0
-        for file in list_dir:
-            if extensions is not None:
-                if file.endswith(extensions):  # eg: '.txt'
-                    count += 1
-            else:
-                count += 1
+        if extensions:
+            count = sum(1 for file in list_dir if file.endswith(extensions))
+        else:
+            count = len(list_dir)
         return count
 
     @staticmethod
-    def select_specific_object_from_folder(path, count) -> str:
-        return os.listdir(path)[count]
-    
-
+    def select_specific_object_from_folder(path: str, index: int) -> str:
+        """Select a specific file from a folder by its index."""
+        return os.listdir(path)[index]
+        
 class YoutubeShortsFetcher:
+    """Class for fetching YouTube shorts videos."""
+    
     def __init__(self):
         self.baseurl = "https://www.pexels.com/search/videos/"
         self.keyword = "natur"
         self.baseurl_args = "?orientation=portrait"
         self.url = self.baseurl + self.keyword + self.baseurl_args
-        self.timeout = 30
+        self.timeout = TIMEOUT
         self.video_links = []
 
-    def establish_connection(self, url: str = None) -> None:
+    def get_browser(self, url: str = None) -> None:
+        """Establish a connection to the website using a ChromeDriver."""
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
 
@@ -54,6 +56,7 @@ class YoutubeShortsFetcher:
         self.browser.get(url)
     
     def get_video_links_from_keyword(self, url: str = None) -> list:
+        """Get the links of videos from a search keyword."""
         WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, "//video/source")))
         
         reached_page_end = False
@@ -68,14 +71,15 @@ class YoutubeShortsFetcher:
                 last_height = new_height
     
         soup = BeautifulSoup(self.browser.page_source, 'lxml')
-        links = soup.find_all("source") 
-        for link in links:
-            self.video_links.append(link.get("src"))
+        #links = soup.find_all("source") 
+        #for link in links:
+        #    self.video_links.append(link.get("src"))
+        self.video_links = [tag.get("src") for tag in soup.select("source")]
 
-        if not os.path.isdir(temp_path):
-            os.mkdir(temp_path)
+        if not os.path.exists(TEMP_PATH):
+            os.makedirs(TEMP_PATH)
 
-        with open(f'{os.path.join(temp_path, self.keyword)}.txt', 'w', newline='', encoding="utf-8") as f:
+        with open(f'{os.path.join(TEMP_PATH, self.keyword)}.txt', 'w', newline='', encoding="utf-8") as f:
             for elem in self.video_links:
                 f.write(f"{elem}\n")
         return self.video_links
@@ -96,16 +100,16 @@ class YoutubeShortsFetcher:
         video.close()
         return duration
     
-    def download_video_series(self, video_links: list = None):
+    def download_video_series(self, video_links: list = None) -> None:
         if video_links is None:
             video_links = []
-            video_links_path = os.path.join(temp_path, self.keyword)
-            with open(f'{video_links_path}.txt', 'r', encoding="utf-8") as f:
+            video_links_path = os.path.join(TEMP_PATH, f"{self.keyword}.txt")
+            with open(video_links_path, 'r', encoding="utf-8") as f:
                 video_links.append(f.read().split("\n"))
 
-        self.amount_of_songs = OsTools.get_folder_count(songs_path, ".mp3")
+        self.amount_of_songs = OsTools.get_folder_count(SONGS_PATH, ".mp3")
         if self.amount_of_songs <= 0:
-            raise RuntimeError(f"no songs in '{songs_path}' found!")
+            raise RuntimeError(f"no songs in '{SONGS_PATH}' found!")
         print(self.amount_of_songs)
 
         for link in video_links[0]:
@@ -116,14 +120,21 @@ class YoutubeShortsFetcher:
             print(link)
             print(self.file_name)
             print(f"Start to downloading video: {self.file_name}")
+            
             # create response object
-            r = requests.get(link, stream=True)
-            # download started
-            self.file_path = os.path.join(temp_path, f"{uuid.uuid1().hex}.mp4")
-            with open(self.file_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024 * 1024):
-                    if chunk:
-                        f.write(chunk)
+            # r = requests.get(link, stream=True)
+            # # download started
+            self.file_path = os.path.join(TEMP_PATH, f"{uuid.uuid1().hex}.mp4")
+            # with open(self.file_path, 'wb') as f:
+            #     for chunk in r.iter_content(chunk_size=1024 * 1024):
+            #         if chunk:
+            #             f.write(chunk)
+            with requests.get(link, stream=True) as r:
+                r.raise_for_status()
+                with open(self.file_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
 
             print(f"{self.file_name} downloaded!")
             
@@ -131,14 +142,13 @@ class YoutubeShortsFetcher:
             if video_length >= 7.0 and video_length < 60.0:
                 self.edit_video()
             else:
-                print(f"video length to short - {video_length}")
-                
-            print(video_length)          
+                print(f"video length to short going to delete it - {video_length}s")
+ 
             
             # removing temp file and row in .txt file
             os.remove(self.file_path)
             
-            with open(f"{video_links_path}.txt", 'r+') as f:
+            with open(video_links_path, 'r+') as f:
                 lines = f.readlines()
                 f.seek(0)
                 f.writelines(line for i, line in enumerate(lines) if i != 0)
@@ -148,17 +158,23 @@ class YoutubeShortsFetcher:
 
     def edit_video(self):
         ran_int = random.choice(range(0, self.amount_of_songs))
-        music_clip =OsTools.select_specific_object_from_folder(songs_path, ran_int)
+        music_clip =OsTools.select_specific_object_from_folder(SONGS_PATH, ran_int)
         print(self.file_path)
         print(music_clip)
         
-        video = VideoFileClip(self.file_path)
-        video_duration = video.duration
-        audio = AudioFileClip(os.path.join(songs_path, music_clip)).set_duration(video_duration).audio_fadeout(.33)
-        video_with_music = video.set_audio(audio)
-        final_path = os.path.join(results_path, f"{uuid.uuid1().hex}.mp4")
-        video_with_music.write_videofile(f"{final_path}", fps=60, codec="libx264")
-        video.close()
+        with VideoFileClip(self.file_path) as video:
+            video_duration = video.duration
+            with AudioFileClip(os.path.join(SONGS_PATH, music_clip)).set_duration(video_duration).audio_fadeout(.33) as audio:
+                video_with_music = video.set_audio(audio)
+                final_path = os.path.join(RESULTS_PATH, f"{uuid.uuid1().hex}.mp4")
+                video_with_music.write_videofile(f"{final_path}", fps=60, codec="libx264")
+        # video = VideoFileClip(self.file_path)
+        # video_duration = video.duration
+        # audio = AudioFileClip(os.path.join(SONGS_PATH, music_clip)).set_duration(video_duration).audio_fadeout(.33)
+        # video_with_music = video.set_audio(audio)
+        # final_path = os.path.join(RESULTS_PATH, f"{uuid.uuid1().hex}.mp4")
+        # video_with_music.write_videofile(f"{final_path}", fps=60, codec="libx264")
+        # video.close()
         
         print(f"{final_path} has been edited!")
         
@@ -171,7 +187,7 @@ class YoutubeShortsUploader:
         self.title = "WONDERFUL NATURE! #travel #nature #shorts"
         self.description = "Music by Bass Rebels"
 
-    def establish_connection(self, url: str = None):
+    def get_browser(self, url: str = None):
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
         self.options.add_argument("--log-level=3")
@@ -186,7 +202,7 @@ class YoutubeShortsUploader:
         
     def upload_video_series(self, path: str = None) -> None:
         if path is None:
-            path = results_path
+            path = RESULTS_PATH
         if OsTools.get_folder_count(path) <= 0:
             raise RuntimeError(f"no videos in '{path}' found!")
             
@@ -210,8 +226,8 @@ class YoutubeShortsUploader:
                                
                 WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//*[@id="content"]/input')))
                 file_input = self.browser.find_element(By.XPATH, '//*[@id="content"]/input')
-                selected_file = OsTools.select_specific_object_from_folder(results_path, 0)
-                file_path = os.path.join(results_path, selected_file)
+                selected_file = OsTools.select_specific_object_from_folder(RESULTS_PATH, 0)
+                file_path = os.path.join(RESULTS_PATH, selected_file)
                 abs_path = os.path.abspath(file_path)
                 print(file_path)
                 print(abs_path)
@@ -248,14 +264,17 @@ if __name__ == "__main__":
     ytFetcher = YoutubeShortsFetcher()
     #video_links = ytFetcher.get_video_links_from_keyword()
     #print(video_links)
-    #ytFetcher.establish_connection()
-    
+    #ytFetcher.get_browser()
     #ytFetcher.download_video_series()
     #ytFetcher.close()
 
-    ytUploader = YoutubeShortsUploader()
-    ytUploader.establish_connection()
-    ytUploader.upload_video_series()
+
+
+    #ytUploader = YoutubeShortsUploader()
+    #ytUploader.get_browser()
+    #ytUploader.upload_video_series()
+    print(OsTools.get_folder_count(TEMP_PATH))
+    
     # print(video_links)
 
     # download all videos
