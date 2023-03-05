@@ -1,17 +1,16 @@
 import time
-# from selenium import webdriver
 import undetected_chromedriver as webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import os
-from requests import get
 import requests
 from bs4 import BeautifulSoup
-import moviepy.editor as mymovie
+from moviepy.editor import VideoFileClip, AudioFileClip
 import random
 import uuid
+from config import USER, PASSWORD
 
 songs_path = "songs"
 temp_path = "temp"
@@ -41,10 +40,10 @@ class YoutubeShortsFetcher:
         self.keyword = "natur"
         self.baseurl_args = "?orientation=portrait"
         self.url = self.baseurl + self.keyword + self.baseurl_args
-        
+        self.timeout = 30
         self.video_links = []
 
-    def __establish_connection(self, url: str = None) -> None:
+    def establish_connection(self, url: str = None) -> None:
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
 
@@ -55,8 +54,7 @@ class YoutubeShortsFetcher:
         self.browser.get(url)
     
     def get_video_links_from_keyword(self, url: str = None) -> list:
-        timeout = 30
-        WebDriverWait(self.browser, timeout).until(EC.presence_of_element_located((By.XPATH, "//video/source")))
+        WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, "//video/source")))
         
         reached_page_end = False
         last_height = self.browser.execute_script("return document.body.scrollHeight")
@@ -88,6 +86,15 @@ class YoutubeShortsFetcher:
 
     def close(self) -> None:
         self.browser.close()
+        
+    @staticmethod
+    def get_video_length(file_path: str) -> int:
+        video = VideoFileClip(file_path)
+        # Get the duration of the video in seconds
+        duration = video.duration
+        # Close the video file
+        video.close()
+        return duration
     
     def download_video_series(self, video_links: list = None):
         if video_links is None:
@@ -101,7 +108,7 @@ class YoutubeShortsFetcher:
             raise RuntimeError(f"no songs in '{songs_path}' found!")
         print(self.amount_of_songs)
 
-        for index, link in enumerate(video_links[0]):
+        for link in video_links[0]:
             if link is None:
                 continue
             
@@ -119,7 +126,14 @@ class YoutubeShortsFetcher:
                         f.write(chunk)
 
             print(f"{self.file_name} downloaded!")
-            self.edit_video()
+            
+            video_length = self.get_video_length(self.file_path)
+            if video_length >= 7.0 and video_length < 60.0:
+                self.edit_video()
+            else:
+                print(f"video length to short - {video_length}")
+                
+            print(video_length)          
             
             # removing temp file and row in .txt file
             os.remove(self.file_path)
@@ -138,11 +152,9 @@ class YoutubeShortsFetcher:
         print(self.file_path)
         print(music_clip)
         
-        
-        video = mymovie.VideoFileClip(self.file_path)
+        video = VideoFileClip(self.file_path)
         video_duration = video.duration
-        audio = mymovie.AudioFileClip(os.path.join(songs_path, music_clip)).set_duration(video_duration).audio_fadeout(.33)
-        #new_audioclip = mymovie.CompositeAudioClip([audioclip])
+        audio = AudioFileClip(os.path.join(songs_path, music_clip)).set_duration(video_duration).audio_fadeout(.33)
         video_with_music = video.set_audio(audio)
         final_path = os.path.join(results_path, f"{uuid.uuid1().hex}.mp4")
         video_with_music.write_videofile(f"{final_path}", fps=60, codec="libx264")
@@ -153,10 +165,13 @@ class YoutubeShortsFetcher:
 class YoutubeShortsUploader:
     def __init__(self) -> None:
         self.url = "https://studio.youtube.com"
+        self.user = USER
+        self.password = PASSWORD
+        self.timeout = 15
+        self.title = "WONDERFUL NATURE! #travel #nature #shorts"
+        self.description = "Music by Bass Rebels"
 
-        self.__establish_connection()
-
-    def __establish_connection(self, url: str = None) -> None:
+    def establish_connection(self, url: str = None):
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
         self.options.add_argument("--log-level=3")
@@ -169,41 +184,78 @@ class YoutubeShortsUploader:
             url = self.url
         self.browser.get(url)
         
-    def upload_video_series(self):
-        if OsTools.get_folder_count(results_path) <= 0:
-            raise RuntimeError(f"no videos in '{results_path}' found!")
+    def upload_video_series(self, path: str = None) -> None:
+        if path is None:
+            path = results_path
+        if OsTools.get_folder_count(path) <= 0:
+            raise RuntimeError(f"no videos in '{path}' found!")
             
-        time.sleep(3)
-        upload_button = self.browser.find_element(By.XPATH, '//*[@id="upload-icon"]')
-        upload_button.click()
-        time.sleep(5)
-
-        file_input = self.browser.find_element(By.XPATH, '//*[@id="content"]/input')
-        simp_path = 'videos/vid{}.mp4'.format(str(i+1))
-        abs_path = os.path.abspath(simp_path)
+        # WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]')))
+        # input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
+        # input_email.send_keys(self.user)
         
-        file_input.send_keys(abs_path)
-
-        time.sleep(7)
-
-        next_button = self.browser.find_element(By.XPATH, '//*[@id="next-button"]')
-        for i in range(3):
-            next_button.click()
-            time.sleep(5)
-
-        done_button = self.browser.find_element(By.XPATH, '//*[@id="done-button"]')
-        done_button.click()
-        time.sleep(5)    
-    
+        # self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+        
+        # WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
+        # input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
+        # input_pass.send_keys(self.password)
+        
+        # self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+        
+        while True:
+            try:
+                WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//*[@id="upload-icon"]')))
+                upload_button = self.browser.find_element(By.XPATH, '//*[@id="upload-icon"]')
+                upload_button.click()
+                               
+                WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//*[@id="content"]/input')))
+                file_input = self.browser.find_element(By.XPATH, '//*[@id="content"]/input')
+                selected_file = OsTools.select_specific_object_from_folder(results_path, 0)
+                file_path = os.path.join(results_path, selected_file)
+                abs_path = os.path.abspath(file_path)
+                print(file_path)
+                print(abs_path)
+                file_input.send_keys(abs_path)
+                
+                WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '(//div[@id="textbox"])[1]')))
+                title = self.browser.find_element(By.XPATH, '(//div[@id="textbox"])[1]')
+                title.clear()
+                title.send_keys(self.title)
+                
+                description = self.browser.find_element(By.XPATH, '(//div[@id="textbox"])[2]')
+                description.send_keys(self.description)
+                
+                self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
+                self.browser.find_element(By.XPATH, '//ytcp-ve[contains(text(), "Nein, es ist nicht speziell für Kinder")]').click()
+                self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
+                self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
+                self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
+                
+                self.browser.find_element(By.XPATH, '//div[contains(text(), "Öffentlich")]').click()
+                WebDriverWait(self.browser, self.timeout).until(EC.invisibility_of_element((By.XPATH, '//*[@id="done-button" and @disabled=""]')))
+                self.browser.find_element(By.XPATH, '//*[@id="done-button"]').click()
+                
+                WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="dialog-title"]')))
+                self.browser.find_element(By.XPATH, '//ytcp-button[@id="close-button"]').click()
+                
+                os.remove(selected_file)
+                print(f"removed file {selected_file} after upload")
+                
+            except KeyboardInterrupt:   
+                exit()
     
 if __name__ == "__main__":
-    vsf = YoutubeShortsFetcher()
-    #video_links = vsf.get_video_links_from_keyword()
+    ytFetcher = YoutubeShortsFetcher()
+    #video_links = ytFetcher.get_video_links_from_keyword()
     #print(video_links)
-    vsf.download_video_series()
-    #vsf.__establish_connection()
-    #vs.close()
+    #ytFetcher.establish_connection()
+    
+    #ytFetcher.download_video_series()
+    #ytFetcher.close()
 
+    ytUploader = YoutubeShortsUploader()
+    ytUploader.establish_connection()
+    ytUploader.upload_video_series()
     # print(video_links)
 
     # download all videos

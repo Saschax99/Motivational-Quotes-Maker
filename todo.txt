@@ -16,3 +16,4 @@
 tags
 creative 
 travel
+check length of video if smaller than x remove
