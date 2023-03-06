@@ -200,23 +200,24 @@ class YoutubeShortsUploader:
             url = self.url
         self.browser.get(url)
         
-    def upload_video_series(self, path: str = None) -> None:
+    def upload_video_series(self, path: str = None, login=True) -> None:
         if path is None:
             path = RESULTS_PATH
         if OsTools.get_folder_count(path) <= 0:
             raise RuntimeError(f"no videos in '{path}' found!")
             
-        # WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]')))
-        # input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
-        # input_email.send_keys(self.user)
-        
-        # self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
-        
-        # WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
-        # input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
-        # input_pass.send_keys(self.password)
-        
-        # self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+        if login:
+            WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]')))
+            input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
+            input_email.send_keys(self.user)
+            
+            self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+            
+            WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
+            input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
+            input_pass.send_keys(self.password)
+            
+            self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
         
         while True:
             try:
@@ -229,8 +230,7 @@ class YoutubeShortsUploader:
                 selected_file = OsTools.select_specific_object_from_folder(RESULTS_PATH, 0)
                 file_path = os.path.join(RESULTS_PATH, selected_file)
                 abs_path = os.path.abspath(file_path)
-                print(file_path)
-                print(abs_path)
+
                 file_input.send_keys(abs_path)
                 
                 WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '(//div[@id="textbox"])[1]')))
@@ -241,6 +241,7 @@ class YoutubeShortsUploader:
                 description = self.browser.find_element(By.XPATH, '(//div[@id="textbox"])[2]')
                 description.send_keys(self.description)
                 
+                WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//*[@id="next-button"]')))
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
                 self.browser.find_element(By.XPATH, '//ytcp-ve[contains(text(), "Nein, es ist nicht speziell für Kinder")]').click()
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
@@ -249,13 +250,17 @@ class YoutubeShortsUploader:
                 
                 self.browser.find_element(By.XPATH, '//div[contains(text(), "Öffentlich")]').click()
                 WebDriverWait(self.browser, self.timeout).until(EC.invisibility_of_element((By.XPATH, '//*[@id="done-button" and @disabled=""]')))
+                try:
+                    WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Tägliches Upload-Limit erreicht")]')))
+                except:
+                    raise InterruptedError("Upload limit reached!")
                 self.browser.find_element(By.XPATH, '//*[@id="done-button"]').click()
                 
                 WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="dialog-title"]')))
                 self.browser.find_element(By.XPATH, '//ytcp-button[@id="close-button"]').click()
                 
-                os.remove(selected_file)
-                print(f"removed file {selected_file} after upload")
+                print(f"removing {file_path}")
+                os.remove(file_path)
                 
             except KeyboardInterrupt:   
                 exit()
@@ -270,10 +275,10 @@ if __name__ == "__main__":
 
 
 
-    #ytUploader = YoutubeShortsUploader()
-    #ytUploader.get_browser()
-    #ytUploader.upload_video_series()
-    print(OsTools.get_folder_count(TEMP_PATH))
+    ytUploader = YoutubeShortsUploader()
+    ytUploader.get_browser()
+    ytUploader.upload_video_series(False)
+    
     
     # print(video_links)
 
