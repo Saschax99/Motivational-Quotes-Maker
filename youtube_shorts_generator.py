@@ -250,10 +250,10 @@ class YoutubeShortsUploader:
                 
                 self.browser.find_element(By.XPATH, '//div[contains(text(), "Öffentlich")]').click()
                 WebDriverWait(self.browser, self.timeout).until(EC.invisibility_of_element((By.XPATH, '//*[@id="done-button" and @disabled=""]')))
-                try:
-                    WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Tägliches Upload-Limit erreicht")]')))
-                except:
-                    raise InterruptedError("Upload limit reached!")
+                # try:
+                #     WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Tägliches Upload-Limit erreicht")]')))
+                # except:
+                #     raise InterruptedError("Upload limit reached!")
                 self.browser.find_element(By.XPATH, '//*[@id="done-button"]').click()
                 
                 WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="dialog-title"]')))
@@ -277,7 +277,7 @@ if __name__ == "__main__":
 
     ytUploader = YoutubeShortsUploader()
     ytUploader.get_browser()
-    ytUploader.upload_video_series(False)
+    ytUploader.upload_video_series(login=False)
     
     
     # print(video_links)
