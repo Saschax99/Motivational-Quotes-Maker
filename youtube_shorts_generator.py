@@ -184,15 +184,23 @@ class YoutubeShortsUploader:
         self.user = USER
         self.password = PASSWORD
         self.timeout = 15
-        self.title = "WONDERFUL NATURE! #travel #nature #shorts"
-        self.description = "Music by Bass Rebels"
+        self.title = "Nature #travel #nature #shorts"
+        self.description = """
+#shortsclip #gallery #artlife #art #youtube #youtuber 
+#subscribe #shortsanity #shortsbeta #shortsfunny
+#shortsart #shortscomplitition #instagramyoutube
+#youtuberlikes #youtubevide #shortstiktok
+#shortsfortnite #shortsbts #shortsbgmi
+#shortsassam #shortsads #youtubegrowth
+#youtubeusers #instavideo
+Music by Bass Rebels"""
 
     def get_browser(self, url: str = None):
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
         self.options.add_argument("--log-level=3")
-        self.options.add_argument("user-data-dir=C:\\Users\dolsa\\AppData\\Local\\Google\\Chrome\\User Data")
-        self.options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        #self.options.add_argument("user-data-dir=C:\\Users\dolsa\\AppData\\Local\\Google\\Chrome\\User Data")
+        #self.options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 
         self.browser = webdriver.Chrome(use_subprocess=True, options=self.options)
         self.browser.maximize_window()
@@ -211,13 +219,13 @@ class YoutubeShortsUploader:
             input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
             input_email.send_keys(self.user)
             
-            self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+            self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
             
             WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
             input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
             input_pass.send_keys(self.password)
             
-            self.browser.find_element(By.XPATH, '//span[contains(text(), "Weiter")]').click()
+            self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
         
         while True:
             try:
@@ -243,19 +251,19 @@ class YoutubeShortsUploader:
                 
                 WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//*[@id="next-button"]')))
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
-                self.browser.find_element(By.XPATH, '//ytcp-ve[contains(text(), "Nein, es ist nicht speziell für Kinder")]').click()
+                self.browser.find_element(By.XPATH, '(//div[@id="radioLabel"]/ytcp-ve[@class="style-scope ytkc-made-for-kids-select"])[2]').click()
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
                 self.browser.find_element(By.XPATH, '//*[@id="next-button"]').click()
                 
-                self.browser.find_element(By.XPATH, '//div[contains(text(), "Öffentlich")]').click()
+                self.browser.find_element(By.XPATH, '(//div[@class="style-scope tp-yt-paper-radio-button" and @id="radioLabel"])[4]').click()
                 WebDriverWait(self.browser, self.timeout).until(EC.invisibility_of_element((By.XPATH, '//*[@id="done-button" and @disabled=""]')))
-                # try:
-                #     WebDriverWait(self.browser, 5).until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Tägliches Upload-Limit erreicht")]')))
-                # except:
-                #     raise InterruptedError("Upload limit reached!")
-                self.browser.find_element(By.XPATH, '//*[@id="done-button"]').click()
-                
+                try:
+                    WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.XPATH, '//tp-yt-iron-icon[@class="error-icon style-scope ytcp-uploads-dialog"]')))
+                    print("limit reached")
+                    exit(0)
+                except:
+                    self.browser.find_element(By.XPATH, '//*[@id="done-button"]').click()
                 WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="dialog-title"]')))
                 self.browser.find_element(By.XPATH, '//ytcp-button[@id="close-button"]').click()
                 
@@ -277,7 +285,7 @@ if __name__ == "__main__":
 
     ytUploader = YoutubeShortsUploader()
     ytUploader.get_browser()
-    ytUploader.upload_video_series(login=False)
+    ytUploader.upload_video_series(login=True)
     
     
     # print(video_links)
