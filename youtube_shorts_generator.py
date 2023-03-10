@@ -199,8 +199,6 @@ Music by Bass Rebels"""
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
         self.options.add_argument("--log-level=3")
-        #self.options.add_argument("user-data-dir=C:\\Users\dolsa\\AppData\\Local\\Google\\Chrome\\User Data")
-        #self.options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 
         self.browser = webdriver.Chrome(use_subprocess=True, options=self.options)
         self.browser.maximize_window()
@@ -208,24 +206,23 @@ Music by Bass Rebels"""
             url = self.url
         self.browser.get(url)
         
-    def upload_video_series(self, path: str = None, login=True) -> None:
+    def upload_video_series(self, path: str = None) -> None:
         if path is None:
             path = RESULTS_PATH
         if OsTools.get_folder_count(path) <= 0:
             raise RuntimeError(f"no videos in '{path}' found!")
             
-        if login:
-            WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]')))
-            input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
-            input_email.send_keys(self.user)
-            
-            self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
-            
-            WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
-            input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
-            input_pass.send_keys(self.password)
-            
-            self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
+        WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="email"]')))
+        input_email = self.browser.find_element(By.XPATH, '//input[@type="email"]')
+        input_email.send_keys(self.user)
+        
+        self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
+        
+        WebDriverWait(self.browser, self.timeout).until(EC.element_to_be_clickable((By.XPATH, '//input[@type="password"]')))
+        input_pass = self.browser.find_element(By.XPATH, '//input[@type="password"]')
+        input_pass.send_keys(self.password)
+        
+        self.browser.find_element(By.XPATH, '(//button[@jsname="LgbsSe"]//span[@jsname="V67aGc"])[2]').click()
         
         while True:
             try:
@@ -285,7 +282,7 @@ if __name__ == "__main__":
 
     ytUploader = YoutubeShortsUploader()
     ytUploader.get_browser()
-    ytUploader.upload_video_series(login=True)
+    ytUploader.upload_video_series()
     
     
     # print(video_links)
