@@ -106,6 +106,6 @@ Music by Bass Rebels"""
                 exit()
                 
 if __name__ == "__main__":
-    instUploader = InstagramShortsUploader(10, INSTA_USER, INSTA_PASSWORD)
+    instUploader = InstagramShortsUploader(10, INSTA_USER, INSTA_PASSWORD, False)
     instUploader.get_browser()
     instUploader.upload_video_series()

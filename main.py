@@ -37,7 +37,7 @@ if __name__ == '__main__':
     except:
         user = str(input("username of youtube: "))
         password = str(input("password of youtube: "))
-    ytUploader = YoutubeShortsUploader(amount, user, password)
+    ytUploader = YoutubeShortsUploader(amount, user, password, True)
     ytUploader.get_browser()
     ytUploader.upload_video_series()
     
