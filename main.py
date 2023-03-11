@@ -1,4 +1,6 @@
-from shorts_generator import ShortsFetcher, YoutubeShortsUploader
+from shorts_generator import ShortsFetcher
+from youtube_uploader import YoutubeShortsUploader
+from instagram_uploader import InstagramShortsUploader
 import config
 
 text_title = '''
@@ -30,8 +32,8 @@ if __name__ == '__main__':
 
     amount = str(input("amount of videos to upload [new account limit=10]: "))
     try:
-        user = config.USER
-        password = config.PASSWORD
+        user = config.YOUTUBE_USER
+        password = config.YOUTUBE_PASSWORD
     except:
         user = str(input("username of youtube: "))
         password = str(input("password of youtube: "))
