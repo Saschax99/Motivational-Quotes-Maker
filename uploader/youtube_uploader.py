@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import os
 from config import RESULTS_PATH
-from os_tools import OsTools
+from omp_tools import OsTools
 
 class YoutubeShortsUploader:
     def __init__(self, amount, user, password, remove_files) -> None:

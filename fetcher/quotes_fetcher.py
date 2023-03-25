@@ -1,11 +1,8 @@
-import time
 import undetected_chromedriver as webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 import os
-from bs4 import BeautifulSoup
 from config import QUOTES_PATH, TEMP_PATH, TIMEOUT
 import json
         
@@ -18,7 +15,7 @@ class QuotesFetcher:
         self.quotes = []
         self.quotes_file_name = "quotes.json"
         self.quotes_path = QUOTES_PATH
-        self.pages = 99
+        self.pages = 100
         
         for path in [QUOTES_PATH, TEMP_PATH]:
             if not os.path.exists(path):
@@ -48,18 +45,19 @@ class QuotesFetcher:
                 else:
                     image = None
                 text = element.find_element(By.XPATH, './/div[@class="quoteText"]').get_attribute("textContent").strip().split("\n")[0]
-                autor = element.find_element(By.XPATH, './/span[@class="authorOrTitle"]').get_attribute("textContent").strip()
+                author = element.find_element(By.XPATH, './/span[@class="authorOrTitle"]').get_attribute("textContent").strip()
                 print("image:", image)
                 print("content:", text)
-                print("autor:", autor)
+                print("author:", author)
                 entry = {
                     "element": {
                         "image": image,
                         "content": text,
-                        "autor": autor
+                        "author": author
                     },
                 }
                 self.write(entry)
+                
                 
             WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//a[@class="next_page"]')))
             self.browser.find_element(By.XPATH, '//a[@class="next_page"]').click()
@@ -67,10 +65,8 @@ class QuotesFetcher:
     def write(self, data):
     # Write the JSON object to a file
         with open(os.path.join(self.quotes_path, self.quotes_file_name), "a", encoding='utf-8') as outfile:
-            outfile.write("[")  
-            json.dump(data, outfile, ensure_ascii=False)
-            outfile.write("]")  
-            outfile.write(",")
+            json.dump(data, outfile, ensure_ascii=False, indent=4)
+            outfile.write(",\n")
     
     # def read():
     #     filename = "my_data.json"  # Define the filename once at the beginning
@@ -103,9 +99,10 @@ class QuotesFetcher:
         self.browser.close()
         
 if __name__ == "__main__":
-    #quotes = QuotesFetcher()
-    #quotes.get_browser()
-    #quotes.get_all_quotes()
-    with open("quotes/quotes.json", "r", encoding='utf-8') as infile:
-        loaded_data = json.load(infile)
-    print(len(loaded_data))
+    quotes = QuotesFetcher()
+    quotes.get_browser()
+    quotes.get_all_quotes()
+    # with open("quotes/quotes.json", "r", encoding='utf-8') as infile:
+    #     loaded_data = json.load(infile)
+    # print(len(loaded_data))
+    # print(loaded_data[0]["element"]["image"])

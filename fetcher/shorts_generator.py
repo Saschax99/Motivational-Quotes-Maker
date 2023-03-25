@@ -1,3 +1,9 @@
+'''
+USED FOR SHORTS FROM PEXELS.COM
+DOWNLOADING FROM PEXELS.COM OVERLAY IT WITH MUSIC AND SAVE VIDEOS IN RESULT PATH
+AT THE MOMENT UNSUSED MIGHT DELETE LATER
+'''
+
 import time
 import undetected_chromedriver as webdriver
 from selenium.webdriver.common.by import By
@@ -11,7 +17,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 import random
 import uuid
 from config import SONGS_PATH, TEMP_PATH, RESULTS_PATH, TIMEOUT
-from os_tools import OsTools
+from omp_tools import OsTools
         
 class ShortsFetcher:
     """Class for fetching shorts videos."""

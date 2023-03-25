@@ -1,6 +1,6 @@
-from shorts_generator import ShortsFetcher
-from youtube_uploader import YoutubeShortsUploader
-from instagram_uploader import InstagramShortsUploader
+from fetcher.shorts_generator import ShortsFetcher
+from uploader.youtube_uploader import YoutubeShortsUploader
+from uploader.instagram_uploader import InstagramShortsUploader
 import config
 
 text_title = '''
