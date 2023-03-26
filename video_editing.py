@@ -36,17 +36,19 @@ class VideoEdit:
         # Draw the text with a black outline on the blank image
         (text_width, text_height), _ = cv2.getTextSize(text, font, font_size, font_thickness)
         text_x = int((frame_width - text_width) / 2)
-        text_y = int(frame_height / 3 - text_height / 2)
+        text_y = int(frame_height / 4 - text_height / 2)
 
         # Draw the text with a black outline on the blank image
         outline_size = 7
-        cv2.putText(blank_image, text, (text_x-outline_size, text_y), font, font_size, (0, 0, 0), font_thickness+2, cv2.LINE_AA)
-        cv2.putText(blank_image, text, (text_x+outline_size, text_y), font, font_size, (0, 0, 0), font_thickness+2, cv2.LINE_AA)
-        cv2.putText(blank_image, text, (text_x, text_y-outline_size), font, font_size, (0, 0, 0), font_thickness+2, cv2.LINE_AA)
-        cv2.putText(blank_image, text, (text_x, text_y+outline_size), font, font_size, (0, 0, 0), font_thickness+2, cv2.LINE_AA)
+        text_color = (255, 255, 255)  # white
+        outline_color = (0, 0, 0)  # black
+        cv2.putText(blank_image, text, (text_x-outline_size, text_y), font, font_size, outline_color, font_thickness+2, cv2.LINE_AA)
+        cv2.putText(blank_image, text, (text_x+outline_size, text_y), font, font_size, outline_color, font_thickness+2, cv2.LINE_AA)
+        cv2.putText(blank_image, text, (text_x, text_y-outline_size), font, font_size, outline_color, font_thickness+2, cv2.LINE_AA)
+        cv2.putText(blank_image, text, (text_x, text_y+outline_size), font, font_size, outline_color, font_thickness+2, cv2.LINE_AA)
 
         # Draw the text with the desired color on top of the black outline
-        cv2.putText(blank_image, text, (text_x, text_y), font, font_size, (255, 255, 255), font_thickness, cv2.LINE_AA)
+        cv2.putText(blank_image, text, (text_x, text_y), font, font_size, text_color, font_thickness, cv2.LINE_AA)
 
         # Loop over the video frames and add the text to each frame
         frames_with_text = []
