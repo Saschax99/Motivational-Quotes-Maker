@@ -10,5 +10,6 @@ install TTS
 deactivate
 
 
+outside of venv
 
 tts --list_models

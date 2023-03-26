@@ -1,38 +1,31 @@
 from TTS.utils.synthesizer import Synthesizer
 from TTS.utils.manage import ModelManager
 
-path = "C:/Users/dolsa/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.8_qbz5n2kfra8p0/LocalCache/local-packages/Python38/site-packages/TTS/.models.json"
+def select_key_value_by_index(dictionary, number):
+    for index, (key, value) in enumerate(dictionary.items()):
+        if index == number:
+            return key, value
 
-model_manager = ModelManager(path)
+class VoiceGenerator:
+    def __init__(self):
+        self.path = "C:/Users/dolsa/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.8_qbz5n2kfra8p0/LocalCache/local-packages/Python38/site-packages/TTS/.models.json"        
+        self.model_manager = ModelManager(self.path)
 
-model_path, config_path, model_item = model_manager.download_model("tts_models/en/ljspeech/tacotron2-DDC")
+        model_path, config_path, model_item = self.model_manager.download_model("tts_models/en/ljspeech/tacotron2-DDC")
+        voc_path, voc_config_path, _ = self.model_manager.download_model("vocoder_models/en/ljspeech/hifigan_v2")
 
-voc_path, voc_config_path, _ = model_manager.download_model(model_item["default_vocoder"])
+        self.syn = Synthesizer(
+            tts_checkpoint=model_path,
+            tts_config_path=config_path,
+            vocoder_checkpoint=voc_path,
+            vocoder_config=voc_config_path
+        )
+        
+    def tts(self, text, output_directory):
+        outputs = self.syn.tts(text)
+        self.syn.save_wav(outputs, output_directory)
 
-syn = Synthesizer(
-    tts_checkpoint=model_path,
-    tts_config_path=config_path,
-    vocoder_checkpoint=voc_path,
-    vocoder_config=voc_config_path
-)
-
-text = "Hello from a machine"
-
-outputs = syn.tts(text)
-syn.save_wav(outputs, "audio-1.wav")
-
-
-
-# initialize the synthesizer with the name of the model and the name of the voice
-# synthesizer = Synthesizer("tts_models/en/ljspeech/tacotron2-DDC/config.json", "tts_models/en/ljspeech/glow-tts/glow-tts.pth.tar", "ljspeech")
-
-# # generate speech from text
-# text = "Hello, world!"
-# audio = synthesizer.synthesize(text)
-
-# # save the audio to a file
-# with open("output.wav", "wb") as f:
-#     f.write(audio)
-    
-    
-    #tts --text "hello this is my first test with tts" --model_path "ljspeech tacotron2/model_file.pth.tar" --config_path "ljspeech tacotron2/config.json" --out_path "output.wav"
+if __name__ == '__main__':
+    voicegen = VoiceGenerator()
+    voicegen.tts("Be yourself; everyone else is already taken. This is going to be used for Youtube tts", 
+                "output.wav")
