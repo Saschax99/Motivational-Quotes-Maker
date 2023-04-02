@@ -1,0 +1,10 @@
+- centering text when appending
+- cut last white background
+
+
+
+
+intro
+watermark
+gameplay ändern
+background music
