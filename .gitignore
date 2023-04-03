@@ -8,3 +8,4 @@ tts/ljspeech tacotron2
 venv/
 background_videos/
 background_music/
+script/output.mp4
