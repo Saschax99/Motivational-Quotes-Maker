@@ -8,3 +8,5 @@ intro
 watermark
 gameplay ändern
 background music
+
+the length of the tts and add a fade to after it the video should stop - set the end time e. g. 0-30 to 0-23
