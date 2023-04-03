@@ -4,7 +4,6 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import cv2
 import numpy as np
 import os
-from typing import Tuple
 
 class VideoEdit:
     def __init__(self):
@@ -65,7 +64,7 @@ class VideoEdit:
 
         # Calculate position of text
         text_x = int((width - text_width) / 2)  # Centered horizontally
-        text_y = int(height / 6)  # Top fourth of the screen vertically
+        text_y = int(height / 4)  # Top fourth of the screen vertically
 
         print("height:", height)
         print("height:", width)
@@ -82,6 +81,7 @@ class VideoEdit:
             frame_width = text_width + 10
             #white_background = np.ones(((frame_height), (frame_width), 3), np.uint8) * 255
             white_background = np.ones(((frame_height*len(words)), (frame_width), 3), np.uint8) #* 255
+            print(white_background)
             # Add black text to white background for each word
             for j, word in enumerate(words):
                 # Add black text to white background
@@ -104,50 +104,8 @@ class VideoEdit:
 
         print(f"Text '{text}' added to {video}. Output saved to {output}.")
         
-        
-    def add_text_to_vertical_video(self, video_path, text, font_scale=2, thickness=3, fade_in=True):
-        cap = cv2.VideoCapture(video_path)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
-        frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        #frames = fps * duration
-        
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        out = cv2.VideoWriter("output.mp4", fourcc, fps, (width, height))
-        
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        border = 8
-        
-        
-        text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
-        x = int((width - text_size[0]) / 2)
-        y = int(height / 6 - text_size[1] / 2)
-        alpha = 0 if fade_in else 1
-        increment = 1 / frames if fade_in else -1 / frames
-        
-        print(y)  # 254
-        print(text_size[1])  # 342
-        for i in range(frames):
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            overlay = frame.copy()
-            
-            overlay = cv2.rectangle(overlay, (x - text_size[0], y - text_size[1] - border), (width, y + border), (0, 0, 0), cv2.FILLED)
-            overlay = cv2.putText(overlay, text[:int(i/frames*len(text))], (x, y), font, font_scale, (255, 255, 255), thickness)
-            cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
-            out.write(frame)
-            
-            alpha += increment
-            
-        cap.release()
-        out.release()
-        
 if __name__ == '__main__':
     path = os.path.abspath(os.path.join("..", "assets", "background_videos", "0-2.mp4"))
     #path2 = os.path.abspath(os.path.join("..", "assets", "default.mp4"))
     #VideoEdit().cut_video(0, 2, path2, path)
-    #VideoEdit().add_text_to_video("adasdas Be yourself; everyone else is already taken.", path, "output.mp4")
-    VideoEdit().add_text_to_vertical_video(path, 'Hello, world!')
+    VideoEdit().add_text_to_video("adasdas Be yourself; everyone else is already taken.", path, "output.mp4")
