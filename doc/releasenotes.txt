@@ -1,0 +1,5 @@
+1.0.1
+    - alpha colors now set correctly
+    - displaying all characters before switching to next text bundle
+    - correct y coords for following text bundles was set
+    - only todo is to implement an function to keep old text with "frame_bundles" list

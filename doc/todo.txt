@@ -5,8 +5,11 @@
 
 
 intro
-watermark
+!watermark
 gameplay ändern
 background music
 
-the length of the tts and add a fade to after it the video should stop - set the end time e. g. 0-30 to 0-23
+
+if comma go to next line insert it into combine_strings method
+
+get the length of the tts and add a fade to after it the video should stop - set the end time e. g. 0-30 to 0-23
