@@ -3,3 +3,9 @@
     - displaying all characters before switching to next text bundle
     - correct y coords for following text bundles was set
     - only todo is to implement an function to keep old text with "frame_bundles" list
+
+1.0.2
+    - fixed bug in y coords for following text bundles
+    - fixed bug to furthermore display all elements/texts on video -> while loop at the end
+    - implemented method to keep old texts and displaying it fluently
+    - 

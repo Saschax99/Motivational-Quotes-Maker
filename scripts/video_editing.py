@@ -1,14 +1,18 @@
-
-#from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import cv2
-import numpy as np
 import os
-from typing import Tuple
 
 class VideoEdit:
     def __init__(self):
-        pass
+        self.background_color = (0, 0, 0)
+        self.text_loading_color = (250, 250, 250)
+        self.text_color = (255, 255, 255)
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.linetype = cv2.LINE_AA
+        self.font_scale = 2
+        self.thickness = 3
+        self.border = 20
+        self.saved_bundles = []
     
     def cut_video(self, start, end, file, output):
         """Set the start and end times of the subclip you want to cut"""
@@ -21,10 +25,18 @@ class VideoEdit:
         # Write the subclip to a new video file with a frame rate of 60fps
         subclip.write_videofile(output, fps=60)
 
-    def __combine_strings(self, str_list):
+    def __combine_strings(self, string):
+        """combine strings into a list with bundles of max. 25 characters
+
+        Args:
+            string (str): string text
+        """
+        if len(string) >= 250:
+            return None
+        
         combined_strings = []
         current_string = ''
-        for string in str_list:
+        for string in string.split():
             if len(current_string + ' ' + string) <= 25:
                 if current_string != '':
                     current_string += ' '
@@ -35,144 +47,92 @@ class VideoEdit:
         combined_strings.append(current_string)
         return combined_strings
 
-    def add_text_to_video(self, text, video, output="output.mp4"):
-        # Load video
-        cap = cv2.VideoCapture(video)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    def add_text_to_vertical_video(self, video_path, text, author=None, output_path="output.mp4", font_scale=2, thickness=3):
+        """add text with optional author to an vertical video
 
-        # Define codec and output video file
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output, fourcc, fps, (width, height))
-
-        # Define text parameters
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 2
-        font_thickness = 3
+        Args:
+            video_path (str): path of video to get edited
+            text (str): text to write on video
+            author (str, optional): author name. Defaults to None.
+            output_path (str, optional): output path for mp4 file. Defaults to "output.mp4".
+            font_scale (int, optional): text fontscale. Defaults to 2.
+            thickness (int, optional): text thickness. Defaults to 3.
+        """
+        self.font_scale = font_scale
+        self.thickness = thickness
         
-        # set text bundles
-        words = self.__combine_strings(text.split())
-        words.append("author x")
-        print(words)
-        
-        #for word in words:
-            
-        text_size, _ = cv2.getTextSize(words[0], font, font_scale, font_thickness)  # size of text x and y
-        text_width = text_size[0]  # text x
-        text_height = int(text_size[1] * 1.75)  # text y
-
-        # Calculate position of text
-        text_x = int((width - text_width) / 2)  # Centered horizontally
-        text_y = int(height / 6)  # Top fourth of the screen vertically
-
-        print("height:", height)
-        print("height:", width)
-        print("textheight:", text_height)
-        print("textwidth:", text_width)
-        
-        # Add text to each frame
-        for i in range(total_frames):
-            ret, frame = cap.read()
-
-            # Create white background for text
-            frame_height = int(text_height * 1.5)
-            #print("frameheight:", frame_height)
-            frame_width = text_width + 10
-            #white_background = np.ones(((frame_height), (frame_width), 3), np.uint8) * 255
-            white_background = np.ones(((frame_height*len(words)), (frame_width), 3), np.uint8) #* 255
-            # Add black text to white background for each word
-            for j, word in enumerate(words):
-                # Add black text to white background
-                cv2.putText(white_background, word, (5, (j+1)*text_height), font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
-
-
-            # Add black text to white background
-            #cv2.putText(white_background, words[0], (5, text_height), font, font_scale, (0, 0, 0), font_thickness, cv2.LINE_AA)
-
-            # Overlay text on frame
-            frame[text_y:text_y+frame_height*len(words), text_x:text_x+frame_width] = white_background
-            #frame[text_y:text_y+frame_height, text_x:text_x+frame_width] = white_background
-            
-            # Write frame to output video
-            out.write(frame)
-
-        # Release video capture and writer objects
-        cap.release()
-        out.release()
-
-        print(f"Text '{text}' added to {video}. Output saved to {output}.")
-        
-        
-    def add_text_to_vertical_video(self, video_path, text, output_path, font_scale=2, thickness=3):
         cap = cv2.VideoCapture(video_path)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        linetype = cv2.LINE_AA
-        #frames = fps * duration
         
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-        
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        border = 20
-                
+                        
         # set text bundles
-        text = self.__combine_strings(text.split())
-        text.append("author x")
+        text = self.__combine_strings(text)
+        if text is None:
+            return
+        
+        if author is not None:
+            text.append(author)
         print(text)
-        frame_bundles = []
         
         for index, bundle in enumerate(text):
-            text_size = cv2.getTextSize(bundle, font, font_scale, thickness)[0]
+            text_size = cv2.getTextSize(bundle, self.font, font_scale, thickness)[0]
             x = int((width - text_size[0]) / 2)
             y = int(height / 6 - text_size[1] / 2)
-            y_offset = index * (text_size[1] * 2)
+            y_offset = int(index * (text_size[1] + self.border * 2))  # need to be smaller
             y += y_offset
             alpha = 0
 
-            print(y)
             for i in range(1, len(bundle) + 1):
                 ret, frame = cap.read()
                 if not ret:
                     break
-
                 overlay = frame.copy()
-                print(bundle)
                 
-                increment = i / len(bundle)
-                overlay = cv2.rectangle(overlay, (x - (text_size[0] * 2), y - text_size[1] - border), (width, y + border), (0, 0, 0), cv2.FILLED)
-                overlay = cv2.putText(overlay, bundle[:i], (x, y), font, font_scale, (255, 255, 255), thickness, linetype)
+                increment = (i / len(bundle)) / 1.5
+                pt1 = (x - (text_size[0] * 2), y - text_size[1] - self.border)
+                pt2 = (width, y + self.border)
+                overlay = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
+                overlay = cv2.putText(overlay, bundle[:i], (x, y), self.font, font_scale, self.text_loading_color, thickness, self.linetype)
                 cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
                 
-                
-                # if frame_bundles:
-                #     for frame in frame_bundles:
-                #         out.write(frame)
-                #         print(frame)
-                    
-                    
+                if self.saved_bundles:
+                    for save_bundle in self.saved_bundles:
+                        cv2.rectangle(frame, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, thickness, self.linetype)
                 out.write(frame)
                 alpha += increment
                 
-                # if i == len(bundle):
-                #     frame_bundles.append(frame)
+                if i == len(bundle):  # last element
+                    d_bundle = {
+                        "pt1": pt1,
+                        "pt2": pt2,
+                        "bundle": bundle,
+                        "x": x,
+                        "y": y,
+                     }
+                    self.saved_bundles.append(d_bundle)
 
-        while True:
-             ret, frame = cap.read()
-             if not ret:
-                 break
+        while True:  # after writing elements to video continue video with elements displayed
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if self.saved_bundles:
+                for save_bundle in self.saved_bundles:
+                    cv2.rectangle(frame, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, thickness, self.linetype)
+            out.write(frame)
              
         cap.release()
         out.release()
+        print(f"Text '{text}' added to {video_path}. Output saved to {output_path}.")
 
-        
 if __name__ == '__main__':
     path = os.path.abspath(os.path.join("..", "assets", "background_videos", "0-2.mp4"))
     #path2 = os.path.abspath(os.path.join("..", "assets", "default.mp4"))
     #VideoEdit().cut_video(0, 2, path2, path)
-    #VideoEdit().add_text_to_video("adasdas Be yourself; everyone else is already taken.", path, "output.mp4")
-    VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken!', "output.mp4")
+    VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken!', output_path="output.mp4")
