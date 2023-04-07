@@ -5,12 +5,14 @@ import os
 class VideoEdit:
     def __init__(self):
         self.background_color = (0, 0, 0)
+        self.background_transparency = .4
         self.text_loading_color = (250, 250, 250)
         self.text_color = (255, 255, 255)
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.linetype = cv2.LINE_AA
         self.font_scale = 2
         self.thickness = 3
+        self.thickness_outer = int(self.thickness * 3.5)
         self.border = 20
         self.saved_bundles = []
     
@@ -80,9 +82,9 @@ class VideoEdit:
         print(text)
         
         for index, bundle in enumerate(text):
-            text_size = cv2.getTextSize(bundle, self.font, font_scale, thickness)[0]
+            text_size = cv2.getTextSize(bundle, self.font, self.font_scale, self.thickness_outer)[0]
             x = int((width - text_size[0]) / 2)
-            y = int(height / 6 - text_size[1] / 2)
+            y = int((height / 6 - text_size[1] / 2) + 10)
             y_offset = int(index * (text_size[1] + self.border * 2))  # need to be smaller
             y += y_offset
             alpha = 0
@@ -96,14 +98,20 @@ class VideoEdit:
                 increment = (i / len(bundle)) / 1.5
                 pt1 = (x - (text_size[0] * 2), y - text_size[1] - self.border)
                 pt2 = (width, y + self.border)
-                overlay = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
-                overlay = cv2.putText(overlay, bundle[:i], (x, y), self.font, font_scale, self.text_loading_color, thickness, self.linetype)
-                cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+                                
+                rect = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
+                if self.saved_bundles:  # add background if bundle exists
+                    for save_bundle in self.saved_bundles:
+                        rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
+                
+                cv2.putText(frame, bundle[:i], (x, y), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)  # outline
+                cv2.putText(frame, bundle[:i], (x, y), self.font, font_scale, self.text_loading_color, self.thickness, self.linetype)  # text
                 
                 if self.saved_bundles:
                     for save_bundle in self.saved_bundles:
-                        cv2.rectangle(frame, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
-                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, thickness, self.linetype)
+                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)
+                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, self.thickness, self.linetype)
                 out.write(frame)
                 alpha += increment
                 
@@ -121,10 +129,15 @@ class VideoEdit:
             ret, frame = cap.read()
             if not ret:
                 break
+            overlay = frame.copy()
             if self.saved_bundles:
+                for save_bundle in self.saved_bundles:  # write firstly the background
+                    rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
+                
                 for save_bundle in self.saved_bundles:
-                    cv2.rectangle(frame, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
-                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, thickness, self.linetype)
+                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)
+                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, self.thickness, self.linetype)
             out.write(frame)
              
         cap.release()
@@ -135,4 +148,4 @@ if __name__ == '__main__':
     path = os.path.abspath(os.path.join("..", "assets", "background_videos", "0-2.mp4"))
     #path2 = os.path.abspath(os.path.join("..", "assets", "default.mp4"))
     #VideoEdit().cut_video(0, 2, path2, path)
-    VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken!', output_path="output.mp4")
+    VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken! asdasdasd asdasdasd asdasdasdasd asdasdasd', output_path="output.mp4")

@@ -8,4 +8,8 @@
     - fixed bug in y coords for following text bundles
     - fixed bug to furthermore display all elements/texts on video -> while loop at the end
     - implemented method to keep old texts and displaying it fluently
-    - 
+
+1.0.3
+    - background is now transparent .7
+    - text outlines
+    - ready to publish
