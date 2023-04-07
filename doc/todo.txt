@@ -1,9 +1,3 @@
-- centering text when appending
-- cut last white background
-
-
-
-
 intro
 !watermark
 gameplay ändern
@@ -12,4 +6,4 @@ background music
 
 if comma go to next line insert it into combine_strings method
 
-get the length of the tts and add a fade to after it the video should stop - set the end time e. g. 0-30 to 0-23
+!!!!!!get the length of the tts and add a fade to after it the video should stop - set the end time e. g. 0-30 to 0-23

@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import os
 from config import RESULTS_PATH, INSTA_USER, INSTA_PASSWORD
-from omp_tools import OsTools
+from ..utils.omp_tools import OsTools
 import random
 
 class InstagramShortsUploader:

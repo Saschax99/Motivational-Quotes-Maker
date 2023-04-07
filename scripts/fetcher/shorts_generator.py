@@ -17,7 +17,7 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 import random
 import uuid
 from config import SONGS_PATH, TEMP_PATH, RESULTS_PATH, TIMEOUT
-from utils.omp_tools import OsTools
+from ..utils.omp_tools import OsTools
         
 class ShortsFetcher:
     """Class for fetching shorts videos."""

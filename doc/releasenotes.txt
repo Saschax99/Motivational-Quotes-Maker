@@ -13,3 +13,7 @@
     - background is now transparent .7
     - text outlines
     - ready to publish
+
+1.0.4
+    - new hierachy in /scripts
+    

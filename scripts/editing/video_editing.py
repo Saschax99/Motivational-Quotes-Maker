@@ -1,18 +1,20 @@
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
 import cv2
 import os
+from ..utils.omp_tools import OsTools
+import random
 
 class VideoEdit:
     def __init__(self):
         self.background_color = (0, 0, 0)
-        self.background_transparency = .4
+        self.background_transparency = .45
         self.text_loading_color = (250, 250, 250)
         self.text_color = (255, 255, 255)
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.linetype = cv2.LINE_AA
         self.font_scale = 2
         self.thickness = 3
-        self.thickness_outer = int(self.thickness * 3.5)
+        self.thickness_outer = int(self.thickness * 4)
         self.border = 20
         self.saved_bundles = []
     
@@ -33,8 +35,8 @@ class VideoEdit:
         Args:
             string (str): string text
         """
-        if len(string) >= 250:
-            return None
+        # if len(string) >= 250:
+        #     return None
         
         combined_strings = []
         current_string = ''
@@ -49,7 +51,7 @@ class VideoEdit:
         combined_strings.append(current_string)
         return combined_strings
 
-    def add_text_to_vertical_video(self, video_path, text, author=None, output_path="output.mp4", font_scale=2, thickness=3):
+    def add_text_to_vertical_video(self, abs_video_path, text, author=None, output_path="output.mp4", font_scale=2, thickness=3):
         """add text with optional author to an vertical video
 
         Args:
@@ -60,10 +62,32 @@ class VideoEdit:
             font_scale (int, optional): text fontscale. Defaults to 2.
             thickness (int, optional): text thickness. Defaults to 3.
         """
+        #text = OsTools.delete_unreadable_characters(text, [";", "”", "“"])
+        if len(text) >= 250 or text is None:
+            print(f"skipped '{text}' because its too long or is None")
+            return None
+        
+        # cutting video with offset to be not useless long
+        tts = output_path.split(".")[-2] + ".wav"
+        bg_music_path = os.path.join("assets", "background_music")
+        temp_output_path = os.path.join("temp", os.path.basename(output_path))
+        background_music = random.choice(os.listdir(bg_music_path)) 
+        print(background_music)
+        print(tts)
+        print(temp_output_path)
+        audio = AudioFileClip(os.path.join("temp", os.path.basename(output_path).split(".")[-2] + ".wav"))
+        audio_offset = 5
+        # Get the duration of the audio clip
+        duration = audio.duration
+        print(f"cutting video with {duration}s audio+ {audio_offset}s offset to make video shorter..")
+        
+        self.cut_video(0, duration + audio_offset, abs_video_path, temp_output_path)
+        #self.add_audio_clips_to_video(temp_output_path, tts, background_music)
+        
         self.font_scale = font_scale
         self.thickness = thickness
         
-        cap = cv2.VideoCapture(video_path)
+        cap = cv2.VideoCapture(temp_output_path)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -74,12 +98,11 @@ class VideoEdit:
                         
         # set text bundles
         text = self.__combine_strings(text)
-        if text is None:
-            return
         
         if author is not None:
-            text.append(author)
-        print(text)
+            text.append("")  # append empty element to separate author text
+            text.append(f"- {author}")
+        print(f"writing '{text}' into video..")
         
         for index, bundle in enumerate(text):
             text_size = cv2.getTextSize(bundle, self.font, self.font_scale, self.thickness_outer)[0]
@@ -142,10 +165,27 @@ class VideoEdit:
              
         cap.release()
         out.release()
-        print(f"Text '{text}' added to {video_path}. Output saved to {output_path}.")
+        print(f"Text '{text}' added to {temp_output_path}. Output saved to {output_path}.")
+
+    def add_audio_clips_to_video(self, abs_video_path, tts_audio_path, background_music_path):
+        # Load the video clip
+        video = VideoFileClip(abs_video_path)
+
+        # Load the two audio clips
+        tts = AudioFileClip(tts_audio_path)
+        background_music = AudioFileClip(background_music_path)
+
+        # Combine the two audio clips
+        combined_audio = CompositeAudioClip([tts, background_music])
+
+        # Add the combined audio to the video clip
+        video = video.set_audio(combined_audio)
+
+        # Write the output video file
+        video.write_videofile(abs_video_path)
 
 if __name__ == '__main__':
-    path = os.path.abspath(os.path.join("..", "assets", "background_videos", "0-2.mp4"))
+    path = os.path.abspath(os.path.join("..", "..", "assets", "background_videos", "0-2.mp4"))
     #path2 = os.path.abspath(os.path.join("..", "assets", "default.mp4"))
     #VideoEdit().cut_video(0, 2, path2, path)
     VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken! asdasdasd asdasdasd asdasdasdasd asdasdasd', output_path="output.mp4")
