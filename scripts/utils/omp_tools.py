@@ -36,7 +36,8 @@ class OsTools:
         with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
             data = json.load(infile)
             return data
-
+        
+    @staticmethod
     def generate_id(id_length):
         # Define the pool of characters to choose from
         characters = string.ascii_letters + string.digits
@@ -44,6 +45,7 @@ class OsTools:
         random_id = ''.join(secrets.choice(characters) for i in range(id_length))
         return random_id
     
+    @staticmethod
     def delete_unreadable_characters(string, chars):
         """
         Removes all characters in the string 'chars' from the string 's'
@@ -55,3 +57,8 @@ class OsTools:
                 else:
                     string = string.replace(char, "")
         return string
+    
+    @staticmethod
+    def delete_files(*files_path):
+        for file_path in files_path:
+            os.remove(file_path)

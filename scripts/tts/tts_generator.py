@@ -21,7 +21,7 @@ class VoiceGenerator:
             vocoder_config=voc_config_path
         )
         
-    def tts(self, text, output_directory):
+    def generate_tts(self, text, output_directory):
         outputs = self.syn.tts(text)
         self.syn.save_wav(outputs, output_directory)
 

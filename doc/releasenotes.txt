@@ -16,4 +16,19 @@
 
 1.0.4
     - new hierachy in /scripts
-    
+    - added paths in config
+    - added extensions in config
+    - implemented function to execute main.py instead of video_editing.py
+        - for every element in quotes path going to execute one job
+        - defining paths
+        - deleting unreadable characters in text
+        - checking if text is too long or empty
+        - generating tts
+            - getting its duration
+        - select random gameplay video and cut it with duration + offset
+        - select background music
+        - add text to the video
+        - add background music and tts to the video
+    - deleting temp files afterwards
+    - cleaned code and moved some files
+    - after all its in a state of working when executing main.py -> outputs in result folder an video with all elements
