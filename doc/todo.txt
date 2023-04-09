@@ -1,6 +1,7 @@
 intro
 !watermark
 gameplay ändern
-background music
 
 if comma go to next line insert it into combine_strings method
+
+select the file instead of set extension to it - could return an error if mp3 is wav or smth

@@ -1,4 +1,4 @@
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip
 import cv2
 import os
 from ..utils.omp_tools import OsTools
@@ -19,7 +19,7 @@ class VideoEdit:
         self.border = 20
         self.saved_bundles = []
     
-    def cut_video(self, start, end, file, output):
+    def cut_video(self, start, end, file, output, intro=None, outro=None):
         """Set the start and end times of the subclip you want to cut"""
         start_time = start # seconds
         end_time = end # seconds
@@ -27,8 +27,19 @@ class VideoEdit:
         video = VideoFileClip(file)
         # Use the subclip method to cut the video
         subclip = video.subclip(start_time, end_time)
-        # Write the subclip to a new video file with a frame rate of 60fps
-        subclip.write_videofile(output, fps=60)
+        
+        if intro is not None:
+            intro_video = VideoFileClip(intro)
+            final_video = concatenate_videoclips([intro_video, subclip])
+        if outro is not None:
+            outro_video = VideoFileClip(outro)
+            final_video = CompositeVideoClip([final_video, outro_video.set_start(final_video.duration)])
+        if intro is not None or outro is not None:
+            final_video.write_videofile(output, fps=60)
+                
+        else:
+            # Write the subclip to a new video file with a frame rate of 60fps
+            subclip.write_videofile(output, fps=60)
 
     def get_audio_length(self, audio_file_path):
         """cutting video with offset to be not useless long"""

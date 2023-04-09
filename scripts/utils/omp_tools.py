@@ -62,3 +62,12 @@ class OsTools:
     def delete_files(*files_path):
         for file_path in files_path:
             os.remove(file_path)
+
+    @staticmethod
+    def remove_first_element_in_file(file_path):
+        with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
+            data = json.load(infile)
+            del data[0]
+        
+        with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
+            json.dump(data, infile, ensure_ascii=False, indent=4)

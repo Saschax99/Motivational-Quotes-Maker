@@ -17,11 +17,11 @@ text_title = '''
 (______/|_| |_|\___/|_|      \__|___/    \_____/|_____)_| |_|_____)_|   \_____|  \__)___/|_|
 '''
 
-def create_video_with_tts_and_text(content, author):
+def create_video_with_tts_and_text(index, content, author):
     selected_background_video = random.choice(os.listdir(config.BACKGROUND_VIDEOS_PATH))  # select background video
     selected_background_video_path = os.path.abspath(os.path.join(config.BACKGROUND_VIDEOS_PATH, selected_background_video))  # get video path of the selected video
     
-    generated_file_name = f"{OsTools.generate_id(10)}_{author}"  # get outputs default name id + author
+    generated_file_name = f"{index}_{OsTools.generate_id(10)}_{author}"  # get outputs default name id + author
     
     result_output_path = os.path.join(config.RESULTS_PATH, generated_file_name) + config.VIDEO_EXTENSION # get results path with default output name
     temp_tts_output_path = os.path.join(config.TEMP_TTS_PATH, generated_file_name) + config.TTS_EXTENSION
@@ -40,6 +40,7 @@ def create_video_with_tts_and_text(content, author):
     
     duration = videoedit.get_audio_length(temp_tts_output_path)  # get duration of audio
     videoedit.cut_video(0, round(duration + config.AUDIO_LENGTH_OFFSET), selected_background_video_path, temp_cut_video_output_path)  # cut selected video with tts length + offset
+    #videoedit.cut_video(0, round(duration + config.AUDIO_LENGTH_OFFSET), selected_background_video_path, temp_cut_video_output_path, config.TEMPLATE_INTRO_PATH, config.TEMPLATE_OUTRO_PATH)  # cut selected video with tts length + offset
     
     selected_background_music = random.choice(os.listdir(config.BACKGROUND_MUSIC_PATH)) 
     selected_background_music_path = os.path.join(config.BACKGROUND_MUSIC_PATH, selected_background_music)
@@ -47,7 +48,7 @@ def create_video_with_tts_and_text(content, author):
     videoedit.add_audio_clips_to_video(temp_text_video_output_path, temp_tts_output_path, selected_background_music_path, result_output_path)
     
     OsTools.delete_files(temp_tts_output_path, temp_cut_video_output_path, temp_text_video_output_path)
-    exit()
+    return result_output_path
 
 if __name__ == '__main__':
     print(text_title)
@@ -61,12 +62,17 @@ if __name__ == '__main__':
         raise AssertionError(f"no json file found in '{config.QUOTES_PATH}'.")
             
     data = OsTools.read_file(file_path)
-    for element in data:
+    for index, element in enumerate(data):
         content = element.get("element").get("content")        
         author = element.get("element").get("autor")  # missspelled..
         print(content, author)
-        create_video_with_tts_and_text(content, author)
+        output = create_video_with_tts_and_text(index, content, author)
+        # if os.path.exists(output):
+        #     OsTools.remove_first_element_in_file(file_path)
+        # else:
+        #     print(f"keyword '{content}' with index {index} too long or couldnt create video")
         
+        exit()            
     # amount = str(input("amount of videos to upload [new account limit=10]: "))
     # try:
     #     user = config.YOUTUBE_USER
