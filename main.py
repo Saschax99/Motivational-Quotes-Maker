@@ -36,16 +36,14 @@ def create_video_with_tts_and_text(index, content, author):
     voicegen = VoiceGenerator()
     videoedit = VideoEdit()
     
+    videoedit.add_text_to_vertical_video(selected_background_video_path, content, author, temp_text_video_output_path)
     voicegen.generate_tts(content, temp_tts_output_path)
-    
     duration = videoedit.get_audio_length(temp_tts_output_path)  # get duration of audio
-    videoedit.cut_video(0, round(duration + config.AUDIO_LENGTH_OFFSET), selected_background_video_path, temp_cut_video_output_path)  # cut selected video with tts length + offset
-    #videoedit.cut_video(0, round(duration + config.AUDIO_LENGTH_OFFSET), selected_background_video_path, temp_cut_video_output_path, config.TEMPLATE_INTRO_PATH, config.TEMPLATE_OUTRO_PATH)  # cut selected video with tts length + offset
+    videoedit.cut_video(0, round(duration + config.AUDIO_LENGTH_OFFSET), temp_text_video_output_path, temp_cut_video_output_path, config.TEMPLATE_INTRO_PATH, config.TEMPLATE_OUTRO_PATH)  # cut selected video with tts length + offset
     
     selected_background_music = random.choice(os.listdir(config.BACKGROUND_MUSIC_PATH)) 
     selected_background_music_path = os.path.join(config.BACKGROUND_MUSIC_PATH, selected_background_music)
-    videoedit.add_text_to_vertical_video(temp_cut_video_output_path, content, author, temp_text_video_output_path)
-    videoedit.add_audio_clips_to_video(temp_text_video_output_path, temp_tts_output_path, selected_background_music_path, result_output_path)
+    videoedit.add_audio_clips_to_video(temp_cut_video_output_path, temp_tts_output_path, selected_background_music_path, result_output_path)
     
     OsTools.delete_files(temp_tts_output_path, temp_cut_video_output_path, temp_text_video_output_path)
     return result_output_path

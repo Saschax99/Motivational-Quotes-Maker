@@ -38,3 +38,8 @@
     - deleting quote from file currently commented
         - added new function to delete it in omp_tools
     - implemented intro and outro into cut_video function - its in testing state firstly commented - intro and outro got larger width and need to set voice and text to start after intro is played
+
+1.2.0
+    - set tts start point to 1 - after intro is done
+    - changed order to achieve that the text isnt displayed in the intro or outro
+    - first sample was uploaded

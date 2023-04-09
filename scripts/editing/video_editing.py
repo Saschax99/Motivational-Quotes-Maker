@@ -2,7 +2,6 @@ from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, con
 import cv2
 import os
 from ..utils.omp_tools import OsTools
-import random
 import config
 
 class VideoEdit:
@@ -170,7 +169,7 @@ class VideoEdit:
             video_duration = video.duration
             with AudioFileClip(background_music_path).set_duration(video_duration).audio_fadeout(.33) as background_audio:
                 reduced_background_audio = background_audio.volumex(0.1)
-                with AudioFileClip(tts_audio_path) as tts_audio:
+                with AudioFileClip(tts_audio_path).set_start(1) as tts_audio:  # hardcoded wait 1 second to start audio should be changed in longterm
                     combined_audio = CompositeAudioClip([tts_audio, reduced_background_audio])
                     video_with_music = video.set_audio(combined_audio)
                     video_with_music.write_videofile(output_path, fps=60, codec="libx264")
