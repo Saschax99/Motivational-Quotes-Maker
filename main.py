@@ -26,7 +26,7 @@ def create_video_with_tts_and_text(index, content, author):
     result_output_path = os.path.join(config.RESULTS_PATH, generated_file_name) + config.VIDEO_EXTENSION # get results path with default output name
     temp_tts_output_path = os.path.join(config.TEMP_TTS_PATH, generated_file_name) + config.TTS_EXTENSION
     temp_cut_video_output_path = os.path.join(config.TEMP_CUT_VIDEO_PATH, generated_file_name) + config.VIDEO_EXTENSION
-    temp_text_video_output_path = os.path.join(config.TEMP_AUDIO_VIDEO_PATH, generated_file_name) + config.VIDEO_EXTENSION
+    temp_text_video_output_path = os.path.join(config.TEMP_VIDEO_TEXT_PATH, generated_file_name) + config.VIDEO_EXTENSION
     
     content = OsTools.delete_unreadable_characters(content, [";", "”", "“"])
     if len(content) >= 250 or content is None:
@@ -61,6 +61,8 @@ if __name__ == '__main__':
             
     data = OsTools.read_file(file_path)
     for index, element in enumerate(data):
+        if index <= 20:
+            continue
         content = element.get("element").get("content")        
         author = element.get("element").get("autor")  # missspelled..
         print(content, author)
@@ -69,8 +71,7 @@ if __name__ == '__main__':
         #     OsTools.remove_first_element_in_file(file_path)
         # else:
         #     print(f"keyword '{content}' with index {index} too long or couldnt create video")
-        
-        exit()            
+                     
     # amount = str(input("amount of videos to upload [new account limit=10]: "))
     # try:
     #     user = config.YOUTUBE_USER

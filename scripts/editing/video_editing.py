@@ -1,8 +1,8 @@
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip
 import cv2
 import os
-from ..utils.omp_tools import OsTools
-import config
+#from ..utils.omp_tools import OsTools
+#import config
 
 class VideoEdit:
     def __init__(self):
@@ -17,6 +17,7 @@ class VideoEdit:
         self.thickness_outer = int(self.thickness * 4)
         self.border = 20
         self.saved_bundles = []
+        self.text_writing_speed = 2  # higher = slower
     
     def cut_video(self, start, end, file, output, intro=None, outro=None):
         """Set the start and end times of the subclip you want to cut"""
@@ -79,7 +80,11 @@ class VideoEdit:
             output_path (str, optional): output path for mp4 file. Defaults to "output.mp4".
             font_scale (int, optional): text fontscale. Defaults to 2.
             thickness (int, optional): text thickness. Defaults to 3.
-        """        
+        """
+        def draw_text_with_outline_on_frame(frame, text, x, y):
+            cv2.putText(frame, text, (x, y), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)  # outline
+            cv2.putText(frame, text, (x, y), self.font, font_scale, self.text_loading_color, thickness, self.linetype)  # text
+                    
         self.font_scale = font_scale
         self.thickness = thickness
         
@@ -106,33 +111,37 @@ class VideoEdit:
             y = int((height / 6 - text_size[1] / 2) + 25)
             y_offset = int(index * (text_size[1] + self.border * 2))  # need to be smaller
             y += y_offset
-            alpha = 0
 
-            for i in range(1, len(bundle) + 1):
+            for i in range(0, (len(bundle) + 1) * self.text_writing_speed):  # for 1 bundle/row
+                i = i / self.text_writing_speed
+                
                 ret, frame = cap.read()
                 if not ret:
                     break
                 overlay = frame.copy()
                 
-                increment = (i / len(bundle)) / 1.5
-                pt1 = (x - (text_size[0] * 2), y - text_size[1] - self.border)
+                pt1 = (0, y - text_size[1] - self.border)
                 pt2 = (width, y + self.border)
-                                
-                rect = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
                 if self.saved_bundles:  # add background if bundle exists
                     for save_bundle in self.saved_bundles:
                         rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                rect = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
                 cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
-                
-                cv2.putText(frame, bundle[:i], (x, y), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)  # outline
-                cv2.putText(frame, bundle[:i], (x, y), self.font, font_scale, self.text_loading_color, self.thickness, self.linetype)  # text
                 
                 if self.saved_bundles:
                     for save_bundle in self.saved_bundles:
-                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)
-                        cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, self.thickness, self.linetype)
+                        draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"), save_bundle.get("y"))
+                        
+                if not i.is_integer():  # slowing down the speed of the texts
+                    i = int(i)
+                    draw_text_with_outline_on_frame(frame, bundle[:i], x, y)
+                    out.write(frame)
+                    continue
+                else:
+                    i = int(i)
+                    draw_text_with_outline_on_frame(frame, bundle[:i], x, y)
+                
                 out.write(frame)
-                alpha += increment
                 
                 if i == len(bundle):  # last element
                     d_bundle = {
@@ -155,8 +164,7 @@ class VideoEdit:
                 cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
                 
                 for save_bundle in self.saved_bundles:
-                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)
-                    cv2.putText(frame, save_bundle.get("bundle"), (save_bundle.get("x"), save_bundle.get("y")), self.font, font_scale, self.text_color, self.thickness, self.linetype)
+                    draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"), save_bundle.get("y"))
             out.write(frame)
              
         cap.release()
@@ -169,13 +177,14 @@ class VideoEdit:
             video_duration = video.duration
             with AudioFileClip(background_music_path).set_duration(video_duration).audio_fadeout(.33) as background_audio:
                 reduced_background_audio = background_audio.volumex(0.1)
-                with AudioFileClip(tts_audio_path).set_start(1) as tts_audio:  # hardcoded wait 1 second to start audio should be changed in longterm
+                with AudioFileClip(tts_audio_path).set_start(1.2) as tts_audio:  # hardcoded wait 1 second to start audio should be changed in longterm
                     combined_audio = CompositeAudioClip([tts_audio, reduced_background_audio])
                     video_with_music = video.set_audio(combined_audio)
                     video_with_music.write_videofile(output_path, fps=60, codec="libx264")
 
 if __name__ == '__main__':
-    path = os.path.abspath(os.path.join("..", "..", "assets", "background_videos", "0-2.mp4"))
-    #path2 = os.path.abspath(os.path.join("..", "assets", "default.mp4"))
-    #VideoEdit().cut_video(0, 2, path2, path)
-    VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken! asdasdasd asdasdasd asdasdasdasd asdasdasd', output_path="output.mp4")
+    # path2 = os.path.abspath(os.path.join("..", "..", "assets", "output.mp4"))
+    # path = os.path.abspath(os.path.join("..", "..", "assets", "background_videos", "9.mp4"))
+    # VideoEdit().cut_video(0, 30, path2, path)
+    # VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken! asdasdasd asdasdasd asdasdasdasd asdasdasd', output_path="output.mp4")
+    pass

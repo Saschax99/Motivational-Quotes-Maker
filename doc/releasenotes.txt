@@ -43,3 +43,12 @@
     - set tts start point to 1 - after intro is done
     - changed order to achieve that the text isnt displayed in the intro or outro
     - first sample was uploaded
+
+1.2.1
+    - fixed bug to set black border at 0 instead of calculating it
+    - fixed start time of tts from 1.0 to 1.2 because of the intro
+    - added self.text_writing_speed to slowing down the writing of the text - every second frame writing next element
+    - fixed on displaying first character after second frame instead of the first one
+    - added function in video_editing.py
+        - draw_text_row_with_outline_on_frame to add text
+    - added new background_videos

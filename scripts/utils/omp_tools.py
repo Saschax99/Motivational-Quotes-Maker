@@ -61,7 +61,10 @@ class OsTools:
     @staticmethod
     def delete_files(*files_path):
         for file_path in files_path:
-            os.remove(file_path)
+            try:
+                os.remove(file_path)
+            except PermissionError:
+                print(f"cant delete {file_path}, going to skip this one")
 
     @staticmethod
     def remove_first_element_in_file(file_path):
