@@ -1,8 +1,7 @@
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeAudioClip, concatenate_videoclips, CompositeVideoClip
 import cv2
 import os
-#from ..utils.omp_tools import OsTools
-#import config
+
 
 class VideoEdit:
     def __init__(self):
@@ -18,16 +17,26 @@ class VideoEdit:
         self.border = 20
         self.saved_bundles = []
         self.text_writing_speed = 2  # higher = slower
-    
-    def cut_video(self, start, end, file, output, intro=None, outro=None):
-        """Set the start and end times of the subclip you want to cut"""
-        start_time = start # seconds
-        end_time = end # seconds
+
+    @staticmethod
+    def cut_video(start, end, file, output, intro=None, outro=None):
+        """Set the start and end times of the subclip you want to cut
+
+        Args:
+            start (float): start time of the video
+            end (float): end time of the video
+            file (str): file name 
+            output (str): output path
+            intro (str, optional): path of intro. Defaults to None.
+            outro (str, optional): path of outro. Defaults to None.
+        """
+        start_time = start  # seconds
+        end_time = end  # seconds
         # Load the original video into a VideoFileClip object
         video = VideoFileClip(file)
         # Use the subclip method to cut the video
         subclip = video.subclip(start_time, end_time)
-        
+
         if intro is not None:
             intro_video = VideoFileClip(intro)
             final_video = concatenate_videoclips([intro_video, subclip])
@@ -36,19 +45,21 @@ class VideoEdit:
             final_video = CompositeVideoClip([final_video, outro_video.set_start(final_video.duration)])
         if intro is not None or outro is not None:
             final_video.write_videofile(output, fps=60)
-                
+
         else:
             # Write the subclip to a new video file with a frame rate of 60fps
             subclip.write_videofile(output, fps=60)
 
-    def get_audio_length(self, audio_file_path):
+    @staticmethod
+    def get_audio_length(audio_file_path):
         """cutting video with offset to be not useless long"""
         audio = AudioFileClip(audio_file_path)
         # Get the duration of the audio clip
         duration = audio.duration
         return duration
 
-    def __combine_strings(self, string):
+    @staticmethod
+    def __combine_strings(string):
         """combine strings into a list with bundles of max. 25 characters
 
         Args:
@@ -56,7 +67,7 @@ class VideoEdit:
         """
         # if len(string) >= 250:
         #     return None
-        
+
         combined_strings = []
         current_string = ''
         for string in string.split():
@@ -70,7 +81,8 @@ class VideoEdit:
         combined_strings.append(current_string)
         return combined_strings
 
-    def add_text_to_vertical_video(self, abs_video_path, text, author=None, output_path="output.mp4", font_scale=2, thickness=3):
+    def add_text_to_vertical_video(self, abs_video_path, text, author=None, output_path="output.mp4", font_scale=2,
+                                   thickness=3):
         """add text with optional author to an vertical video
 
         Args:
@@ -81,30 +93,33 @@ class VideoEdit:
             font_scale (int, optional): text fontscale. Defaults to 2.
             thickness (int, optional): text thickness. Defaults to 3.
         """
+
         def draw_text_with_outline_on_frame(frame, text, x, y):
-            cv2.putText(frame, text, (x, y), self.font, font_scale, self.background_color, self.thickness_outer, self.linetype)  # outline
-            cv2.putText(frame, text, (x, y), self.font, font_scale, self.text_loading_color, thickness, self.linetype)  # text
-                    
+            cv2.putText(frame, text, (x, y), self.font, font_scale, self.background_color, self.thickness_outer,
+                        self.linetype)  # outline
+            cv2.putText(frame, text, (x, y), self.font, font_scale, self.text_loading_color, thickness,
+                        self.linetype)  # text
+
         self.font_scale = font_scale
         self.thickness = thickness
-        
+
         cap = cv2.VideoCapture(abs_video_path)
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        
+
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-                        
+
         # set text bundles
         text = self.__combine_strings(text)
-        
+
         if author is not None:
-            #text.append("")  # append empty element to separate author text
+            # text.append("")  # append empty element to separate author text
             text.append(f"- {author}")
         print(f"writing '{text}' into video..")
-        
+
         for index, bundle in enumerate(text):
             text_size = cv2.getTextSize(bundle, self.font, self.font_scale, self.thickness_outer)[0]
             x = int((width - text_size[0]) / 2)
@@ -114,24 +129,26 @@ class VideoEdit:
 
             for i in range(0, (len(bundle) + 1) * self.text_writing_speed):  # for 1 bundle/row
                 i = i / self.text_writing_speed
-                
+
                 ret, frame = cap.read()
                 if not ret:
                     break
                 overlay = frame.copy()
-                
+
                 pt1 = (0, y - text_size[1] - self.border)
                 pt2 = (width, y + self.border)
                 if self.saved_bundles:  # add background if bundle exists
                     for save_bundle in self.saved_bundles:
-                        rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                        rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"),
+                                             self.background_color, cv2.FILLED)
                 rect = cv2.rectangle(overlay, pt1, pt2, self.background_color, cv2.FILLED)
                 cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
-                
+
                 if self.saved_bundles:
                     for save_bundle in self.saved_bundles:
-                        draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"), save_bundle.get("y"))
-                        
+                        draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"),
+                                                        save_bundle.get("y"))
+
                 if not i.is_integer():  # slowing down the speed of the texts
                     i = int(i)
                     draw_text_with_outline_on_frame(frame, bundle[:i], x, y)
@@ -140,9 +157,9 @@ class VideoEdit:
                 else:
                     i = int(i)
                     draw_text_with_outline_on_frame(frame, bundle[:i], x, y)
-                
+
                 out.write(frame)
-                
+
                 if i == len(bundle):  # last element
                     d_bundle = {
                         "pt1": pt1,
@@ -150,7 +167,7 @@ class VideoEdit:
                         "bundle": bundle,
                         "x": x,
                         "y": y,
-                     }
+                    }
                     self.saved_bundles.append(d_bundle)
 
         while True:  # after writing elements to video continue video with elements displayed
@@ -160,31 +177,36 @@ class VideoEdit:
             overlay = frame.copy()
             if self.saved_bundles:
                 for save_bundle in self.saved_bundles:  # write firstly the background
-                    rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color, cv2.FILLED)
+                    rect = cv2.rectangle(overlay, save_bundle.get("pt1"), save_bundle.get("pt2"), self.background_color,
+                                         cv2.FILLED)
                 cv2.addWeighted(rect, self.background_transparency, frame, 1 - self.background_transparency, 0, frame)
-                
+
                 for save_bundle in self.saved_bundles:
-                    draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"), save_bundle.get("y"))
+                    draw_text_with_outline_on_frame(frame, save_bundle.get("bundle"), save_bundle.get("x"),
+                                                    save_bundle.get("y"))
             out.write(frame)
-             
+
         cap.release()
         out.release()
         print(f"Text '{text}' added to {abs_video_path}. Output saved to {output_path}.")
 
-    def add_audio_clips_to_video(self, video_path, tts_audio_path, background_music_path, output_path):
-        
+    @staticmethod
+    def add_audio_clips_to_video(video_path, tts_audio_path, background_music_path, output_path):
+        """add audio clips to a video
+
+        Args:
+            video_path (str): path
+            tts_audio_path (str): path
+            background_music_path (str): path
+            output_path (str): path
+        """
         with VideoFileClip(video_path) as video:
             video_duration = video.duration
-            with AudioFileClip(background_music_path).set_duration(video_duration).audio_fadeout(.33) as background_audio:
+            with AudioFileClip(background_music_path).set_duration(video_duration).audio_fadeout(
+                    .33) as background_audio:
                 reduced_background_audio = background_audio.volumex(0.1)
-                with AudioFileClip(tts_audio_path).set_start(1.2) as tts_audio:  # hardcoded wait 1 second to start audio should be changed in longterm
+                with AudioFileClip(tts_audio_path).set_start(
+                        1.2) as tts_audio:  # hardcoded wait 1 second to start audio should be changed in longterm
                     combined_audio = CompositeAudioClip([tts_audio, reduced_background_audio])
                     video_with_music = video.set_audio(combined_audio)
                     video_with_music.write_videofile(output_path, fps=60, codec="libx264")
-
-if __name__ == '__main__':
-    # path2 = os.path.abspath(os.path.join("..", "..", "assets", "output.mp4"))
-    # path = os.path.abspath(os.path.join("..", "..", "assets", "background_videos", "9.mp4"))
-    # VideoEdit().cut_video(0, 30, path2, path)
-    # VideoEdit().add_text_to_vertical_video(path, 'Be yourself; everyone else is already taken! asdasdasd asdasdasd asdasdasdasd asdasdasd', output_path="output.mp4")
-    pass

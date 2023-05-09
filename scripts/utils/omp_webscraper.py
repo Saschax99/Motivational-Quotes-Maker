@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
+
 class WebScraper:
     def __init__(self):
         self.url = "https://www.goodreads.com/quotes?page=1"
@@ -21,27 +22,28 @@ class WebScraper:
         self.browser.get(url)
         print(f"established connection to {url}")
         return self.browser
-    
+
     def wait_for_element_to_be_visible(self, xpath: str, timeout: int = None) -> None:
         if timeout is None:
             timeout = self.timeout
         WebDriverWait(self.browser, timeout).until(EC.presence_of_element_located((By.XPATH, xpath)))
-    
-    def find_element(self, xpath, reference_element = None):
+
+    def find_element(self, xpath, reference_element=None):
         if reference_element is not None:
             element = reference_element.find_element(By.XPATH, xpath)
         element = self.browser.find_element(By.XPATH, xpath)
         return element
-    
-    def find_elements(self, xpath, reference_element = None):
+
+    def find_elements(self, xpath, reference_element=None):
         if reference_element is not None:
             element = reference_element.find_elements(By.XPATH, xpath)
         element = self.browser.find_elements(By.XPATH, xpath)
         return element
-    
-    def get_attribute(self, element, attribute):
+
+    @staticmethod
+    def get_attribute(element, attribute):
         return element.get_attribute(attribute)
-    
+
     def close(self) -> None:
         print("closing browser..")
         self.browser.close()

@@ -1,12 +1,9 @@
 results/
 temp/
-config.py
 __pycache__/
 quotes
 .idea
-tts/ljspeech tacotron2
 venv/
 background_videos/
 background_music/
 templates/
-scripts/output.mp4

@@ -52,3 +52,10 @@
     - added function in video_editing.py
         - draw_text_row_with_outline_on_frame to add text
     - added new background_videos
+
+1.3.0
+    - added documentation
+    - cleaned code
+    - changed requirements.txt
+    - added example video
+    - added config

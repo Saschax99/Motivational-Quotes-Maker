@@ -5,6 +5,7 @@ import string
 
 encoding = 'utf-8'
 
+
 class OsTools:
     @staticmethod
     def get_folder_count(path: str, extensions: str = None) -> int:
@@ -20,14 +21,14 @@ class OsTools:
     def select_specific_object_from_folder(path: str, index: int) -> str:
         """Select a specific file from a folder by its index."""
         return os.listdir(path)[index]
-    
+
     @staticmethod
     def write_file(data, path):
         """Write data into a file e. g. json object to a file"""
         with open(path, "a", encoding=encoding) as outfile:
             json.dump(data, outfile, ensure_ascii=False, indent=4)
             outfile.write(",\n")
-            
+
     @staticmethod
     def read_file(file_path):
         """read file in path and return data"""
@@ -36,7 +37,7 @@ class OsTools:
         with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
             data = json.load(infile)
             return data
-        
+
     @staticmethod
     def generate_id(id_length):
         # Define the pool of characters to choose from
@@ -44,7 +45,7 @@ class OsTools:
         # Generate the secure random ID
         random_id = ''.join(secrets.choice(characters) for i in range(id_length))
         return random_id
-    
+
     @staticmethod
     def delete_unreadable_characters(string, chars):
         """
@@ -57,7 +58,7 @@ class OsTools:
                 else:
                     string = string.replace(char, "")
         return string
-    
+
     @staticmethod
     def delete_files(*files_path):
         for file_path in files_path:
@@ -71,6 +72,6 @@ class OsTools:
         with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
             data = json.load(infile)
             del data[0]
-        
+
         with open(os.path.abspath(file_path), "r", encoding=encoding) as infile:
             json.dump(data, infile, ensure_ascii=False, indent=4)

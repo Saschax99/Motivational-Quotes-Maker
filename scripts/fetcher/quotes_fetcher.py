@@ -5,10 +5,11 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 from config import QUOTES_PATH, TEMP_PATH, TIMEOUT
 import json
-        
+
+
 class QuotesFetcher:
     """Class for fetching shorts videos."""
-    
+
     def __init__(self):
         self.url = "https://www.goodreads.com/quotes?page=1"
         self.timeout = TIMEOUT
@@ -16,13 +17,17 @@ class QuotesFetcher:
         self.quotes_file_name = "quotes.json"
         self.quotes_path = QUOTES_PATH
         self.pages = 100
-        
+
         for path in [QUOTES_PATH, TEMP_PATH]:
             if not os.path.exists(path):
                 os.makedirs(path)
 
     def get_browser(self, url: str = None) -> None:
-        """Establish a connection to the website using a ChromeDriver."""
+        """Establish a connection to the website using a ChromeDriver.
+
+        Args:
+            url (str, optional): url of website. Defaults to None.
+        """
         self.options = webdriver.ChromeOptions()
         self.options.add_argument("--lang=en")
 
@@ -31,12 +36,13 @@ class QuotesFetcher:
         if url is None:
             url = self.url
         self.browser.get(url)
-    
-    def get_all_quotes(self) -> list:
-        """Get the links of videos from a search keyword."""
-        
-        for _ in range(self.pages):    
-            WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//div[@class="quote"]')))
+
+    def get_all_quotes(self):
+        """Get the links of videos from a search keyword
+        """
+        for _ in range(self.pages):
+            WebDriverWait(self.browser, self.timeout).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@class="quote"]')))
             element_count = self.browser.find_elements(By.XPATH, '//div[@class="quote"]')
             for element in element_count:
                 image_element = element.find_elements(By.XPATH, './/img')
@@ -44,8 +50,12 @@ class QuotesFetcher:
                     image = image_element[0].get_attribute("src")
                 else:
                     image = None
-                text = element.find_element(By.XPATH, './/div[@class="quoteText"]').get_attribute("textContent").strip().split("\n")[0]
-                author = element.find_element(By.XPATH, './/span[@class="authorOrTitle"]').get_attribute("textContent").strip()
+                text = \
+                    element.find_element(By.XPATH, './/div[@class="quoteText"]').get_attribute(
+                        "textContent").strip().split(
+                        "\n")[0]
+                author = element.find_element(By.XPATH, './/span[@class="authorOrTitle"]').get_attribute(
+                    "textContent").strip()
                 print("image:", image)
                 print("content:", text)
                 print("author:", author)
@@ -57,52 +67,21 @@ class QuotesFetcher:
                     },
                 }
                 self.write(entry)
-                
-                
-            WebDriverWait(self.browser, self.timeout).until(EC.presence_of_element_located((By.XPATH, '//a[@class="next_page"]')))
+
+            WebDriverWait(self.browser, self.timeout).until(
+                EC.presence_of_element_located((By.XPATH, '//a[@class="next_page"]')))
             self.browser.find_element(By.XPATH, '//a[@class="next_page"]').click()
-    
+
     def write(self, data):
-    # Write the JSON object to a file
+        """write the JSON object to a file
+
+        Args:
+            data (list): data to write
+        """
         with open(os.path.join(self.quotes_path, self.quotes_file_name), "a", encoding='utf-8') as outfile:
             json.dump(data, outfile, ensure_ascii=False, indent=4)
             outfile.write(",\n")
-    
-    # def read():
-    #     filename = "my_data.json"  # Define the filename once at the beginning
 
-    #     # Load the JSON data into memory
-    #     with open(filename, "r") as infile:
-    #         loaded_data = json.load(infile)
-
-    #     # Define a function to retrieve a specific variable from the loaded data
-    #     def get_variable(variable_name):
-    #         if variable_name in loaded_data:
-    #             return loaded_data[variable_name]
-    #         else:
-    #             return None
-
-    #     # Retrieve specific variables from the loaded data using the get_variable function
-    #     name = get_variable("person.name")
-    #     age = get_variable("person.age")
-    #     math_score = get_variable("tests[0].score")
-    #     english_score = get_variable("tests[1].score")
-
-    #     # Print the retrieved variables
-    #     print("Name:", name)
-    #     print("Age:", age)
-    #     print("Math Score:", math_score)
-    #     print("English Score:", english_score)
-    
     def close(self) -> None:
         print("closing browser..")
         self.browser.close()
-        
-if __name__ == "__main__":
-    quotes = QuotesFetcher()
-    quotes.get_browser()
-    quotes.get_all_quotes()
-    # with open("quotes/quotes.json", "r", encoding='utf-8') as infile:
-    #     loaded_data = json.load(infile)
-    # print(len(loaded_data))
-    # print(loaded_data[0]["element"]["image"])
