@@ -1,5 +1,5 @@
 
-# Youtube-Affiliate-Maker
+# Motivational-Quotes-Maker 
 
 this program creates videos with tts, text, intro + outro, background music and background video
 
